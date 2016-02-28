@@ -1,0 +1,11 @@
+<launch>
+  <!-- Load universal robot description format (URDF) -->
+  <param name="robot_description" textfile="$(find descartes_benchmarks)/config/ur5_demo.urdf"/>
+
+  <!-- The semantic description that corresponds to the URDF -->
+  <param name="robot_description_semantic" textfile="$(find descartes_benchmarks)/config/ur5_demo.srdf" />
+
+  <!-- Launch the benchmark test itself -->
+  <node name="benchmark_descartes" pkg="descartes_benchmarks" type="descartes_benchmarks_node" />
+
+</launch>  
