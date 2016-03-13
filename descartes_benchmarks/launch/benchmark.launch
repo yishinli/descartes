@@ -1,4 +1,7 @@
 <launch>
+
+  <arg name="callgrind" default="False"/> 
+
   <!-- Load universal robot description format (URDF) -->
   <param name="robot_description" textfile="$(find descartes_benchmarks)/config/ur5_demo.urdf"/>
 
@@ -6,6 +9,10 @@
   <param name="robot_description_semantic" textfile="$(find descartes_benchmarks)/config/ur5_demo.srdf" />
 
   <!-- Launch the benchmark test itself -->
-  <node name="benchmark_descartes" pkg="descartes_benchmarks" type="descartes_benchmarks_node" />
-
+  <group if="$(arg callgrind)">
+    <node name="benchmark_descartes" pkg="descartes_benchmarks" type="descartes_benchmarks_node" output="screen" launch-prefix="valgrind --tool=callgrind" />
+  </group>
+  <group unless="$(arg callgrind)">
+    <node name="benchmark_descartes" pkg="descartes_benchmarks" type="descartes_benchmarks_node" output="screen" launch-prefix="" />
+  </group>
 </launch>  
