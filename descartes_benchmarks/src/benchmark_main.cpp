@@ -8,6 +8,13 @@
 #include "descartes_planner/dense_planner.h"
 #include "descartes_trajectory/axial_symmetric_pt.h"
 
+#define DESCARTES_EXPECTS(v) do { if (!(v)) abort(); } while (false);
+
+void escape(void* p)
+{
+  asm volatile("" : : "g"(p) : "memory");
+}
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "descartes_benchmarks");
@@ -15,13 +22,14 @@ int main(int argc, char** argv)
   spinner.start();
 
   auto robot_model = descartes_core::RobotModelPtr(new descartes_benchmarks::UR5RobotModel());
-  ROS_ASSERT(robot_model->initialize("robot_description", "manipulator", "world", "tool"));
+  DESCARTES_EXPECTS(robot_model->initialize("robot_description", "manipulator", "world", "tool"));
+  robot_model->setCheckCollisions(false);
 
   descartes_planner::DensePlanner planner;
-  ROS_ASSERT(planner.initialize(robot_model));
+  DESCARTES_EXPECTS(planner.initialize(robot_model));
 
   EigenSTL::vector_Affine3d poses;
-  ROS_ASSERT(descartes_benchmarks::createLemniscateCurve(0.07, 0.1, 200, 4,
+  DESCARTES_EXPECTS(descartes_benchmarks::createLemniscateCurve(0.07, 0.1, 200, 6,
                                                          Eigen::Vector3d(0, 0.5, 0), poses));
 
   // Translate to Descartes
@@ -33,15 +41,22 @@ int main(int argc, char** argv)
     auto pt = descartes_core::TrajectoryPtPtr( new descartes_trajectory::AxialSymmetricPt(pose,
                                                      M_PI/4,
                                                      descartes_trajectory::AxialSymmetricPt::Z_AXIS,
-                                                     descartes_core::TimingConstraint(1.0)) );
+                                                     descartes_core::TimingConstraint(0.1)) );
     input.push_back(pt);
   }
 
-  ROS_ASSERT(planner.planPath(input));
-  ROS_ASSERT(planner.getPath(output));
+  auto start_tm = std::chrono::steady_clock::now();
+
+  DESCARTES_EXPECTS(planner.planPath(input));
+  DESCARTES_EXPECTS(planner.getPath(output));
+
+  escape(output.data());
 
   // Finish time
-
+  auto finish_tm = std::chrono::steady_clock::now();
+  auto dt =  std::chrono::duration_cast<std::chrono::milliseconds>(finish_tm - start_tm);
+  std::cout << "Total time (ms): " << dt.count () << std::endl;
+  std::cout << "Trajectory size: " << output.size() << std::endl;
 
   return 0;
 }
