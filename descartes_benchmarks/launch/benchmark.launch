@@ -1,6 +1,9 @@
 <launch>
 
-  <arg name="callgrind" default="False"/> 
+  <arg name="callgrind" default="False"/>
+  <arg name="planner" default="dense"/>
+  <arg name="angle_disc" default="0.7853981"/>
+  <arg name="time_step" default="0.1" />
 
   <!-- Load universal robot description format (URDF) -->
   <param name="robot_description" textfile="$(find descartes_benchmarks)/config/ur5_demo.urdf"/>
@@ -10,9 +13,17 @@
 
   <!-- Launch the benchmark test itself -->
   <group if="$(arg callgrind)">
-    <node name="benchmark_descartes" pkg="descartes_benchmarks" type="descartes_benchmarks_node" output="screen" launch-prefix="valgrind --tool=callgrind" />
+    <node name="benchmark_descartes" pkg="descartes_benchmarks" type="descartes_benchmarks_node" output="screen" launch-prefix="valgrind --tool=callgrind">
+      <param name="planner" value="$(arg planner)"/>
+      <param name="angle_disc" value="$(arg angle_disc)"/>
+      <param name="time_step" value="$(arg time_step)"/>
+    </node>
   </group>
   <group unless="$(arg callgrind)">
-    <node name="benchmark_descartes" pkg="descartes_benchmarks" type="descartes_benchmarks_node" output="screen" launch-prefix="" />
+    <node name="benchmark_descartes" pkg="descartes_benchmarks" type="descartes_benchmarks_node" output="screen" launch-prefix="">
+      <param name="planner" value="$(arg planner)"/>
+      <param name="angle_disc" value="$(arg angle_disc)"/>
+      <param name="time_step" value="$(arg time_step)"/>
+    </node>
   </group>
 </launch>  
