@@ -43,19 +43,7 @@
   <!-- manually measured -->
   <!-- arm -->
   <link name="base_link">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/Base.dae"/>
-      </geometry>
-      <material name="LightGrey">
-        <color rgba="0.7 0.7 0.7 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/base.stl"/>
-      </geometry>
-    </collision>
+    
     <inertial>
       <mass value="4.0"/>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
@@ -71,19 +59,7 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="shoulder_link">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/Shoulder.dae"/>
-      </geometry>
-      <material name="LightGrey">
-        <color rgba="0.7 0.7 0.7 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/shoulder.stl"/>
-      </geometry>
-    </collision>
+    
     <inertial>
       <mass value="3.7"/>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
@@ -99,19 +75,7 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="upper_arm_link">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/UpperArm.dae"/>
-      </geometry>
-      <material name="LightGrey">
-        <color rgba="0.7 0.7 0.7 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/upper_arm.stl"/>
-      </geometry>
-    </collision>
+    
     <inertial>
       <mass value="8.393"/>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.28"/>
@@ -127,19 +91,7 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="forearm_link">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/Forearm.dae"/>
-      </geometry>
-      <material name="LightGrey">
-        <color rgba="0.7 0.7 0.7 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/forearm.stl"/>
-      </geometry>
-    </collision>
+    
     <inertial>
       <mass value="2.275"/>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.25"/>
@@ -155,19 +107,7 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="wrist_1_link">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/Wrist1.dae"/>
-      </geometry>
-      <material name="LightGrey">
-        <color rgba="0.7 0.7 0.7 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/wrist_1.stl"/>
-      </geometry>
-    </collision>
+    
     <inertial>
       <mass value="1.219"/>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
@@ -183,19 +123,7 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="wrist_2_link">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/Wrist2.dae"/>
-      </geometry>
-      <material name="LightGrey">
-        <color rgba="0.7 0.7 0.7 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/wrist_2.stl"/>
-      </geometry>
-    </collision>
+    
     <inertial>
       <mass value="1.219"/>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
@@ -211,19 +139,7 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="wrist_3_link">
-    <visual>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/visual/Wrist3.dae"/>
-      </geometry>
-      <material name="LightGrey">
-        <color rgba="0.7 0.7 0.7 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://ur_description/meshes/ur5/collision/wrist_3.stl"/>
-      </geometry>
-    </collision>
+    
     <inertial>
       <mass value="0.1879"/>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
@@ -253,15 +169,6 @@
   </joint>
   <!-- defining tool -->
   <link name="tool">
-    <visual>
-      <origin rpy="0 0 1.5707963268" xyz="0.0 -0.02 -0.11"/>
-      <geometry>
-        <mesh filename="package://ur5_demo_support/meshes/stylus_tool.stl"/>
-      </geometry>
-      <material name="yellow">
-        <color rgba="0.8 0.8 0.6 1"/>
-      </material>
-    </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 -0.11"/>
       <geometry>
