@@ -17,8 +17,9 @@ namespace descartes_planner
 class DensePlanner: public descartes_core::PathPlannerBase
 {
 public:
-  DensePlanner();
+  typedef descartes_core::TrajectoryPt::ID ID;
 
+  DensePlanner();
   virtual ~DensePlanner();
 
   virtual bool initialize(descartes_core::RobotModelConstPtr model);
@@ -28,10 +29,10 @@ public:
   virtual void getConfig(descartes_core::PlannerConfig& config) const;
   virtual bool planPath(const std::vector<descartes_core::TrajectoryPtPtr>& traj);
   virtual bool getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const;
-  virtual bool addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
-  virtual bool addBefore(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
-  virtual bool remove(const descartes_core::TrajectoryPt::ID& ref_id);
-  virtual bool modify(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp);
+  virtual bool addAfter(const ID& ref_id, descartes_core::TrajectoryPtPtr tp);
+  virtual bool addBefore(const ID& ref_id, descartes_core::TrajectoryPtPtr tp);
+  virtual bool remove(const ID& ref_id);
+  virtual bool modify(const ID& ref_id, descartes_core::TrajectoryPtPtr tp);
   virtual int getErrorCode() const;
   virtual bool getErrorMessage(int error_code, std::string& msg) const;
 
@@ -44,9 +45,9 @@ public:
 
 protected:
 
-  descartes_core::TrajectoryPt::ID getPrevious(const descartes_core::TrajectoryPt::ID& ref_id);
-  descartes_core::TrajectoryPt::ID getNext(const descartes_core::TrajectoryPt::ID& ref_id);
-  descartes_core::TrajectoryPtPtr get(const descartes_core::TrajectoryPt::ID& ref_id);
+  ID getPrevious(const ID& ref_id);
+  ID getNext(const ID& ref_id);
+  descartes_core::TrajectoryPtPtr get(const ID& ref_id);
   bool updatePath();
 
 

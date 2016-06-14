@@ -59,9 +59,9 @@ void DensePlanner::getConfig(descartes_core::PlannerConfig& config) const
   config = config_;
 }
 
-descartes_core::TrajectoryPt::ID DensePlanner::getPrevious(const descartes_core::TrajectoryPt::ID& ref_id)
+DensePlanner::ID DensePlanner::getPrevious(const ID& ref_id)
 {
-  descartes_core::TrajectoryPt::ID id;
+  ID id;
   auto predicate = [&ref_id](descartes_core::TrajectoryPtPtr p)
     {
       return ref_id == p->getID();
@@ -85,8 +85,8 @@ bool DensePlanner::updatePath()
 {
   std::vector<descartes_core::TrajectoryPtPtr> traj;
   const CartesianMap& cart_map = planning_graph_->getCartesianMap();
-  descartes_core::TrajectoryPt::ID first_id = descartes_core::TrajectoryID::make_nil();
-  auto predicate = [&first_id](const std::pair<descartes_core::TrajectoryPt::ID,CartesianPointInformation>& p)
+  ID first_id = descartes_core::TrajectoryID::make_nil();
+  auto predicate = [&first_id](const std::pair<ID,CartesianPointInformation>& p)
     {
       const auto& info = p.second;
       if(info.links_.id_previous == descartes_core::TrajectoryID::make_nil())
@@ -111,7 +111,7 @@ bool DensePlanner::updatePath()
 
   // retrieving original trajectory
   traj.resize(cart_map.size());
-  descartes_core::TrajectoryPt::ID current_id = first_id;
+  ID current_id = first_id;
   for(int i = 0; i < traj.size(); i++)
   {
     if(cart_map.count(current_id) == 0)
@@ -157,9 +157,9 @@ bool DensePlanner::updatePath()
   return error_code_ == descartes_core::PlannerError::OK;
 }
 
-descartes_core::TrajectoryPt::ID DensePlanner::getNext(const descartes_core::TrajectoryPt::ID& ref_id)
+DensePlanner::ID DensePlanner::getNext(const ID& ref_id)
 {
-  descartes_core::TrajectoryPt::ID id;
+  ID id;
   auto predicate = [&ref_id](descartes_core::TrajectoryPtPtr p)
     {
       return ref_id == p->getID();
@@ -178,7 +178,7 @@ descartes_core::TrajectoryPt::ID DensePlanner::getNext(const descartes_core::Tra
   return id;
 }
 
-descartes_core::TrajectoryPtPtr DensePlanner::get(const descartes_core::TrajectoryPt::ID& ref_id)
+descartes_core::TrajectoryPtPtr DensePlanner::get(const ID& ref_id)
 {
   descartes_core::TrajectoryPtPtr p;
   auto predicate = [&ref_id](descartes_core::TrajectoryPtPtr p)
@@ -230,14 +230,14 @@ bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) c
   return error_code_ == descartes_core::PlannerError::OK;
 }
 
-bool DensePlanner::addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp)
+bool DensePlanner::addAfter(const ID& ref_id, descartes_core::TrajectoryPtPtr tp)
 {
   if(path_.empty())
   {
     return false;
   }
 
-  descartes_core::TrajectoryPt::ID next_id = getNext(ref_id);
+  ID next_id = getNext(ref_id);
   if(!next_id.is_nil())
   {
     if(planning_graph_->addTrajectory(tp,ref_id,next_id))
@@ -266,14 +266,14 @@ bool DensePlanner::addAfter(const descartes_core::TrajectoryPt::ID& ref_id, desc
   return true;
 }
 
-bool DensePlanner::addBefore(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp)
+bool DensePlanner::addBefore(const ID& ref_id, descartes_core::TrajectoryPtPtr tp)
 {
   if(path_.empty())
   {
     return false;
   }
 
-  descartes_core::TrajectoryPt::ID prev_id = getPrevious(ref_id);
+  ID prev_id = getPrevious(ref_id);
   if(!prev_id.is_nil())
   {
     if(planning_graph_->addTrajectory(tp,prev_id,ref_id))
@@ -302,7 +302,7 @@ bool DensePlanner::addBefore(const descartes_core::TrajectoryPt::ID& ref_id, des
   return true;
 }
 
-bool DensePlanner::remove(const descartes_core::TrajectoryPt::ID& ref_id)
+bool DensePlanner::remove(const ID& ref_id)
 {
   if(path_.empty())
   {
@@ -339,7 +339,7 @@ bool DensePlanner::remove(const descartes_core::TrajectoryPt::ID& ref_id)
   return true;
 }
 
-bool DensePlanner::modify(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp)
+bool DensePlanner::modify(const ID& ref_id, descartes_core::TrajectoryPtPtr tp)
 {
   if(path_.empty())
   {
