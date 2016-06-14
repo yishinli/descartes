@@ -27,8 +27,9 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/function.hpp>
+ 
 #include "descartes_core/trajectory_pt.h"
-#include "descartes_trajectory/cart_trajectory_pt.h"
+// #include "descartes_trajectory/cart_trajectory_pt.h"
 #include "descartes_trajectory/joint_trajectory_pt.h"
 
 #include <map>
@@ -57,7 +58,7 @@ struct CartesianPointRelationship
 
 typedef boost::adjacency_list<boost::listS, /*edge container*/
   boost::vecS, /*vertex_container*/
-  boost::bidirectionalS, /*allows in_edge and out_edge*/
+  boost::directedS, /*allows only out_edges*/
   JointVertex, /*vertex structure*/
   JointEdge /*edge structure*/
 > JointGraph;
@@ -65,7 +66,6 @@ typedef boost::adjacency_list<boost::listS, /*edge container*/
 typedef boost::graph_traits<JointGraph>::vertex_iterator VertexIterator;
 typedef boost::graph_traits<JointGraph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<JointGraph>::out_edge_iterator OutEdgeIterator;
-typedef boost::graph_traits<JointGraph>::in_edge_iterator InEdgeIterator;
 
 typedef boost::function<double(const std::vector<double>&, const std::vector<double>&)> CostFunction;
 
