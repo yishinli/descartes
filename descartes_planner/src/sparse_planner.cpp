@@ -193,12 +193,12 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
   return true;
 }
 
-bool SparsePlanner::addAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::addAfter(const ID& ref_id,TrajectoryPtPtr cp)
 {
   ros::Time start_time = ros::Time::now();
   int sparse_index;
   int index;
-  TrajectoryPt::ID prev_id, next_id;
+  ID prev_id, next_id;
 
   sparse_index= findNearestSparsePointIndex(ref_id);
   if(sparse_index == INVALID_INDEX)
@@ -238,12 +238,12 @@ bool SparsePlanner::addAfter(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
   return true;
 }
 
-bool SparsePlanner::addBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::addBefore(const ID& ref_id,TrajectoryPtPtr cp)
 {
   ros::Time start_time = ros::Time::now();
   int sparse_index;
   int index;
-  TrajectoryPt::ID prev_id, next_id;
+  ID prev_id, next_id;
 
   sparse_index= findNearestSparsePointIndex(ref_id,false);
   if(sparse_index == INVALID_INDEX)
@@ -281,7 +281,7 @@ bool SparsePlanner::addBefore(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
   return true;
 }
 
-bool SparsePlanner::remove(const TrajectoryPt::ID& ref_id)
+bool SparsePlanner::remove(const ID& ref_id)
 {
   ros::Time start_time = ros::Time::now();
   int index = getDensePointIndex(ref_id);
@@ -320,11 +320,11 @@ bool SparsePlanner::remove(const TrajectoryPt::ID& ref_id)
   return true;
 }
 
-bool SparsePlanner::modify(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
+bool SparsePlanner::modify(const ID& ref_id,TrajectoryPtPtr cp)
 {
   ros::Time start_time = ros::Time::now();
   int sparse_index;
-  TrajectoryPt::ID prev_id, next_id;
+  ID prev_id, next_id;
 
   sparse_index= getSparsePointIndex(ref_id);
   cp->setID(ref_id);
@@ -365,7 +365,7 @@ bool SparsePlanner::modify(const TrajectoryPt::ID& ref_id,TrajectoryPtPtr cp)
   return true;
 }
 
-bool SparsePlanner::isInSparseTrajectory(const TrajectoryPt::ID& ref_id)
+bool SparsePlanner::isInSparseTrajectory(const ID& ref_id)
 {
   auto predicate = [&ref_id](std::tuple<int,TrajectoryPtPtr,JointTrajectoryPt>& t)
     {
@@ -376,7 +376,7 @@ bool SparsePlanner::isInSparseTrajectory(const TrajectoryPt::ID& ref_id)
                        sparse_solution_array_.end(),predicate) != sparse_solution_array_.end());
 }
 
-int SparsePlanner::getDensePointIndex(const TrajectoryPt::ID& ref_id)
+int SparsePlanner::getDensePointIndex(const ID& ref_id)
 {
   int index = INVALID_INDEX;
   auto predicate = [&ref_id](TrajectoryPtPtr cp)
@@ -393,7 +393,7 @@ int SparsePlanner::getDensePointIndex(const TrajectoryPt::ID& ref_id)
   return index;
 }
 
-int SparsePlanner::getSparsePointIndex(const TrajectoryPt::ID& ref_id)
+int SparsePlanner::getSparsePointIndex(const ID& ref_id)
 {
   int index = INVALID_INDEX;
   auto predicate = [ref_id](std::tuple<int,TrajectoryPtPtr,JointTrajectoryPt>& t)
@@ -410,7 +410,7 @@ int SparsePlanner::getSparsePointIndex(const TrajectoryPt::ID& ref_id)
   return index;
 }
 
-int SparsePlanner::findNearestSparsePointIndex(const TrajectoryPt::ID& ref_id,bool skip_equal)
+int SparsePlanner::findNearestSparsePointIndex(const ID& ref_id,bool skip_equal)
 {
   int index = INVALID_INDEX;
   int dense_index = getDensePointIndex(ref_id);
@@ -497,8 +497,8 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
 bool SparsePlanner::getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_array)
 {
   const CartesianMap& cart_map = planning_graph_->getCartesianMap();
-  TrajectoryPt::ID first_id = descartes_core::TrajectoryID::make_nil();
-  auto predicate = [&first_id](const std::pair<TrajectoryPt::ID,CartesianPointInformation>& p)
+  ID first_id = descartes_core::TrajectoryID::make_nil();
+  auto predicate = [&first_id](const std::pair<ID,CartesianPointInformation>& p)
     {
       const auto& info = p.second;
       if(info.links_.id_previous == descartes_core::TrajectoryID::make_nil())
@@ -522,7 +522,7 @@ bool SparsePlanner::getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_a
 
   // copying point pointers in order
   sparse_array.resize(cart_map.size());
-  TrajectoryPt::ID current_id = first_id;
+  ID current_id = first_id;
   for(int i = 0; i < sparse_array.size(); i++)
   {
     if(cart_map.count(current_id) == 0)
@@ -539,7 +539,7 @@ bool SparsePlanner::getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_a
   return true;
 }
 
-bool SparsePlanner::getSolutionJointPoint(const CartTrajectoryPt::ID& cart_id, JointTrajectoryPt& j)
+bool SparsePlanner::getSolutionJointPoint(const ID& cart_id, JointTrajectoryPt& j)
 {
   if(joint_points_map_.count(cart_id) > 0)
   {
@@ -678,7 +678,7 @@ bool SparsePlanner::plan()
     // point_pos is the index into the dense trajectory that the new point is to be copied from
     int sparse_index, point_pos;
     int result = interpolateSparseTrajectory(sparse_solution_array_, sparse_index, point_pos);
-    TrajectoryPt::ID prev_id, next_id;
+    ID prev_id, next_id;
     TrajectoryPtPtr cart_point;
     switch(result)
     {
