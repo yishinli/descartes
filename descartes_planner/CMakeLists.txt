@@ -44,9 +44,10 @@ include_directories(include
 ## DescartesTrajectoryPt lib
 add_library(descartes_planner
             src/planning_graph.cpp
-            src/sparse_planner.cpp
+            # src/sparse_planner.cpp
             src/dense_planner.cpp
-            src/plugin_init.cpp
+            # src/plugin_init.cpp
+            src/ladder_graph_dijkstras.cpp
 )
 
 target_link_libraries(descartes_planner
