@@ -17,7 +17,9 @@ class DijkstrasSearch
 public:
   DijkstrasSearch(LadderGraph& graph);
 
-  std::pair<unsigned, double> run();
+  double run();
+
+  std::vector<unsigned> shortestPath() const;
 
 private:
   const LadderGraph& graph_;
@@ -35,6 +37,11 @@ private:
   }
 
   VD& predecessor(VD v)
+  {
+    return solution_[v.rung].predecessor[v.index];
+  }
+
+  const VD& predecessor(VD v) const
   {
     return solution_[v.rung].predecessor[v.index];
   }

@@ -76,6 +76,11 @@ public:
     return count;
   }
 
+  const double* dataAt(size_type rung, size_type index) const
+  {
+    return getRung(rung).data.data() + (dof_ * index);
+  }
+
   size_type size() const noexcept
   {
     return rungs_.size();

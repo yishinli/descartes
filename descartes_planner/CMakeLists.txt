@@ -10,8 +10,10 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
 )
 
+
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
+find_package(OpenMP REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -30,6 +32,8 @@ catkin_package(
   DEPENDS
     Boost
     Eigen
+    OpenMP
+    gomp
 )
 
 ###########
@@ -40,6 +44,8 @@ include_directories(include
                     ${Boost_INCLUDE_DIRS}
                     ${Eigen_INCLUDE_DIRS}
 )
+
+add_definitions(-fopenmp)
 
 ## DescartesTrajectoryPt lib
 add_library(descartes_planner
@@ -52,6 +58,8 @@ add_library(descartes_planner
 
 target_link_libraries(descartes_planner
                       ${catkin_LIBRARIES}
+                      ${OpenMP_LIBRARIES}
+                      gomp
 )
 
 
@@ -79,7 +87,7 @@ if(CATKIN_ENABLE_TESTING)
   set(UTEST_PLANNER_SRC_FILES 
       test/utest.cpp
       test/dense_planner.cpp
-      test/sparse_planner.cpp
+      # test/sparse_planner.cpp
       test/utils/trajectory_maker.cpp)
   catkin_add_gtest(${PROJECT_NAME}_planner_utest ${UTEST_PLANNER_SRC_FILES})
   target_link_libraries(${PROJECT_NAME}_planner_utest descartes_planner)

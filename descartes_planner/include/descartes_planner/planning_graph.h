@@ -101,7 +101,8 @@ protected:
   /** @brief calculate weights fro each start point to each end point */
   std::vector<LadderGraph::EdgeList> calculateEdgeWeights(const std::vector<double> &start_joints,
                                                           const std::vector<double> &end_joints,
-                                                          size_t dof);
+                                                          size_t dof,
+                                                          const descartes_core::TimingConstraint& tm);
 };
 
 } /* namespace descartes_planner */

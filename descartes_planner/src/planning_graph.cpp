@@ -24,16 +24,10 @@
 
 #include "descartes_planner/planning_graph.h"
 
-#include <stdio.h>
-#include <iomanip>
-#include <iostream>
-#include <utility>
-#include <algorithm>
-#include <fstream>
-
 #include <ros/console.h>
+#include <omp.h>
 
-#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include "descartes_planner/ladder_graph_dijkstras.h"
 
 using namespace descartes_core;
 using namespace descartes_trajectory;
@@ -61,10 +55,11 @@ descartes_core::RobotModelConstPtr PlanningGraph::getRobotModel()
 
 bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>* points)
 {
+  ROS_WARN("1");
+  auto start = ros::Time::now();
   // validate input
   if (!points)
   {
-    // one or both are null
     ROS_ERROR_STREAM("points == null. Cannot initialize graph with null list.");
     return false;
   }
@@ -89,17 +84,21 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>* points)
   }
 
   // now we have a graph with data in the 'rungs' and we need to compute the edges
+//  #pragma omp parallel for
   for (std::size_t i = 0; i < graph_.size() - 1; ++i)
   {
     // compute edges for pair 'i' and 'i+1'
     const auto& joints1 = graph_.getRung(i).data;
     const auto& joints2 = graph_.getRung(i+1).data;
+    const auto& tm = graph_.getRung(i + 1).timing;
 
-    std::vector<LadderGraph::EdgeList> edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF());
+    std::vector<LadderGraph::EdgeList> edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
 
     graph_.assignEdges(i, std::move(edges));
   }
 
+  auto stop = ros::Time::now();
+  ROS_WARN("T: %f", (stop - start).toSec());
   return true;
 }
 
@@ -120,7 +119,25 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 
 bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& path)
 {
-  return false;
+  DijkstrasSearch search (graph_);
+  auto min_cost = search.run();
+  auto path_idxs = search.shortestPath();
+  cost = min_cost;
+  const auto dof = graph_.dof();
+
+  for (size_t i = 0; i < path_idxs.size(); ++i)
+  {
+    const auto idx = path_idxs[i];
+    const auto* data = graph_.dataAt(i, idx);
+    const auto& tm = graph_.getRung(i).timing;
+
+    auto pt = JointTrajectoryPt(std::vector<double>(data, data + dof), tm);
+    path.push_back(std::move(pt));
+  }
+
+  ROS_INFO("Computed path of length %lu with cost %lf", path_idxs.size(), cost);
+
+  return cost == std::numeric_limits<double>::infinity();
 }
 
 bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const std::size_t count,
@@ -128,6 +145,7 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
 {
   poses.resize(count);
 
+//  #pragma omp parallel for
   for (std::size_t i = 0; i < count; ++i)
   {
     std::vector<std::vector<double>> joint_poses;
@@ -136,7 +154,7 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
     if (joint_poses.empty())
     {
       ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
-      return false;
+//      return false;
     }
 
     poses[i] = std::move(joint_poses);
@@ -146,7 +164,7 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
 }
 
 std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std::vector<double>& start_joints,
-                                         const std::vector<double>& end_joints, size_t dof)
+                                         const std::vector<double>& end_joints, size_t dof, const TimingConstraint& tm)
 {
   const auto from_size = start_joints.size();
   const auto to_size = end_joints.size();
@@ -164,6 +182,12 @@ std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std
 
     for (size_t j = 0; j < to_size; j += dof) // to rung
     {
+      if (!robot_model_->isValidMove(start_joints.data() + i, end_joints.data() + j, tm.upper))
+      {
+        idx++;
+        continue;
+      }
+
       double cost = 0.0;
       for (size_t k = 0; k < dof; ++k)
       {

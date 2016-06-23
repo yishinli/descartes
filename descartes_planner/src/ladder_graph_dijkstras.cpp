@@ -44,7 +44,7 @@ DijkstrasSearch::DijkstrasSearch(LadderGraph& graph)
   N = n;
 }
 
-std::pair<unsigned, double> DijkstrasSearch::run()
+double DijkstrasSearch::run()
 {
   using HeapType = BinaryHeap;
   using handle_t = typename HeapType::handle_type;
@@ -114,15 +114,27 @@ std::pair<unsigned, double> DijkstrasSearch::run()
 
   } // main loop
 
-  // std::cout << "Done!\n";
+  return *std::min_element(solution_.back().distance.begin(), solution_.back().distance.end());
 
-  auto it = std::min_element(solution_.back().distance.begin(), solution_.back().distance.end());
-  // std::cout << *it << " at " << std::distance(solution_.back().distance.begin(), it) << "\n";
+}
 
+std::vector<unsigned> DijkstrasSearch::shortestPath() const
+{
+  auto min_it = std::min_element(solution_.back().distance.begin(), solution_.back().distance.end());
+  auto min_idx = std::distance(solution_.back().distance.begin(), min_it);
 
-  return { std::distance(solution_.back().distance.begin(), it),
-           *it
-  };
+  std::vector<unsigned> path (solution_.size());
+
+  VD vd {path.size() - 1, min_idx};
+  for (unsigned i = 0; i < path.size(); ++i)
+  {
+    auto count = path.size() - 1 - i;
+    assert(vd.rung == count);
+    path[count] = vd.index;
+    vd = predecessor(vd);
+  }
+
+  return path;
 }
 
 } // namespace descartes_planner

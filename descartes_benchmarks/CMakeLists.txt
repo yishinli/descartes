@@ -119,6 +119,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_definitions(-fopenmp)
 
 ## Declare a C++ library
 add_library(descartes_ur5_kinematics_benchmark

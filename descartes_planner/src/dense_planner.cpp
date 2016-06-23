@@ -77,7 +77,9 @@ descartes_core::TrajectoryPt::ID DensePlanner::getPrevious(const descartes_core:
 
 bool DensePlanner::updatePath()
 {
-  return false;
+  double c;
+  std::list<descartes_trajectory::JointTrajectoryPt> list;
+  return planning_graph_->getShortestPath(c, list);
 }
 
 descartes_core::TrajectoryPt::ID DensePlanner::getNext(const descartes_core::TrajectoryPt::ID& ref_id)
@@ -142,16 +144,17 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
     error_code_ = descartes_core::PlannerError::IK_NOT_AVAILABLE;
   }
 
-  return descartes_core::PlannerError::OK == error_code_;
+  return true; //descartes_core::PlannerError::OK == error_code_;
 }
 
 bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const
 {
-  if (path_.empty())
-    return false;
+  return true;
+//  if (path_.empty())
+//    return false;
 
-  path.assign(path_.begin(), path_.end());
-  return error_code_ == descartes_core::PlannerError::OK;
+//  path.assign(path_.begin(), path_.end());
+//  return error_code_ == descartes_core::PlannerError::OK;
 }
 
 bool DensePlanner::addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp)

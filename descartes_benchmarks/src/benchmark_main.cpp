@@ -7,7 +7,7 @@
 #include "descartes_benchmarks/kinematics/ur5_robot_model.h"
 #include "descartes_benchmarks/trajectories/create_lemniscate_curve.h"
 #include "descartes_planner/dense_planner.h"
-#include "descartes_planner/sparse_planner.h"
+// #include "descartes_planner/sparse_planner.h"
 #include "descartes_trajectory/axial_symmetric_pt.h"
 
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     planner.reset(new descartes_planner::DensePlanner());
   } else if (planner_type == "sparse") {
     ROS_INFO("Selecting Sparse-Planner");
-    planner.reset(new descartes_planner::SparsePlanner());
+    // planner.reset(new descartes_planner::SparsePlanner());
   } else {
     ROS_FATAL_STREAM("Did not recognize planner type: " << planner_type);
     return -1;  
