@@ -78,12 +78,52 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
 
 bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previous_id, TrajectoryPt::ID next_id)
 {
+  auto ps = graph_.indexOf(previous_id);
+  auto ns = graph_.indexOf(next_id);
+
   return false; // TODO
 }
 
 bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 {
-  return false; // TODO
+  auto s = graph_.indexOf(point->getID());
+  if (!s.second) return false; // no such point
+  auto idx = s.first;
+
+  // we will need to recompute some vertices now
+  std::vector<std::vector<std::vector<double>>> poses;
+  calculateJointSolutions(&point, 1, poses); // TODO: If there are no points, return false?
+
+  // clear vertices & edges of 'point'
+  graph_.clearVertices(idx);
+  graph_.getEdges(idx).clear(); // TODO: Combine with above?
+  graph_.assignRung(idx, point->getID(), point->getTiming(), poses[0]);
+
+  // If there is a previous point, compute new edges
+  if (!graph_.isFirst(idx))
+  {
+    auto prev_idx = idx - 1;
+    const auto& joints1 = graph_.getRung(prev_idx).data;
+    const auto& joints2 = graph_.getRung(idx).data;
+    const auto& tm = graph_.getRung(idx).timing;
+
+    auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
+    graph_.assignEdges(prev_idx, std::move(edges));
+  }
+
+  // If there is a next point, compute new edges
+  if (!graph_.isLast(idx))
+  {
+    auto next_idx = idx + 1;
+    const auto& joints1 = graph_.getRung(idx).data;
+    const auto& joints2 = graph_.getRung(next_idx).data;
+    const auto& tm = graph_.getRung(next_idx).timing;
+
+    auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
+    graph_.assignEdges(idx, std::move(edges));
+  }
+
+  return true;
 }
 
 bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
@@ -92,16 +132,16 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
   auto s = graph_.indexOf(point->getID());
   if (!s.second) return false;
 
-  auto in_middle = !graph_.isFirst(s.second) && !graph_.isLast(s.second);
+  auto in_middle = !graph_.isFirst(s.first) && !graph_.isLast(s.first);
 
   // remove the vertices & edges associated with this point
-  graph_.clearRung(s.first);
+  graph_.removeRung(s.first);
 
   // recompute edges from previous rung to next rung, if applicable
   if (in_middle)
   {
-    auto prev_idx = s.second - 1;
-    auto next_idx = s.second; // We erased a point, so the indexes have collapsed by one
+    auto prev_idx = s.first - 1;
+    auto next_idx = s.first; // We erased a point, so the indexes have collapsed by one
 
     const auto& joints1 = graph_.getRung(prev_idx).data;
     const auto& joints2 = graph_.getRung(next_idx).data;

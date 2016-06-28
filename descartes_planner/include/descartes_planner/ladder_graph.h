@@ -143,20 +143,31 @@ public:
     getEdges(index).resize(r.data.size());
   }
 
-  void clearVertices(size_type index)
+  void removeVertices(size_type index)
   {
     rungs_.erase(std::next(rungs_.begin(), index));
   }
 
-  void clearEdges(size_type index)
+  void removeEdges(size_type index)
   {
     edges_.erase(std::next(edges_.begin(), index));
   }
 
-  void clearRung(size_type index)
+  void removeRung(size_type index)
   {
-    clearVertices(index);
-    clearEdges(index);
+    removeVertices(index);
+    removeEdges(index);
+  }
+
+  void clearVertices(size_type index)
+  {
+    rungs_[index].data.clear();
+  }
+
+  void insertRung(size_type index)
+  {
+    rungs_.insert(std::next(rungs_.begin(), index), {});
+    edges_.insert(std::next(edges_.begin(), index), {});
   }
 
   // TODO: Implement clear rung / remove rung
