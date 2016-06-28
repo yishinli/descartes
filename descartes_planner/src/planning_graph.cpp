@@ -58,7 +58,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
   graph_.allocate(points.size());
   for (std::size_t i = 0; i < points.size(); ++i)
   {
-    graph_.assignRung(i, points[i].getID(), points[i].getTiming(), all_joint_sols[i]);
+    graph_.assignRung(i, points[i]->getID(), points[i]->getTiming(), all_joint_sols[i]);
   }
 
   // now we have a graph with data in the 'rungs' and we need to compute the edges
@@ -122,7 +122,7 @@ bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& 
 
   ROS_INFO("Computed path of length %lu with cost %lf", path_idxs.size(), cost);
 
-  return cost == std::numeric_limits<double>::infinity();
+  return cost != std::numeric_limits<double>::infinity();
 }
 
 bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const std::size_t count,
