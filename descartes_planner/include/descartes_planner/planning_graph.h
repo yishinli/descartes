@@ -41,10 +41,7 @@ typedef boost::function<double(const std::vector<double> &, const std::vector<do
 class PlanningGraph
 {
 public:
-  PlanningGraph(descartes_core::RobotModelConstPtr model);
-  PlanningGraph(descartes_core::RobotModelConstPtr model, CostFunction cost_function_callback);
-
-  virtual ~PlanningGraph();
+  PlanningGraph(descartes_core::RobotModelConstPtr model, CostFunction cost_function_callback = CostFunction{});
 
   /** \brief Clear all previous graph data */
   void clear();
@@ -53,7 +50,7 @@ public:
    * @param points list of trajectory points to be used to construct the graph
    * @return True if the graph was successfully created
    */
-  bool insertGraph(const std::vector<descartes_core::TrajectoryPtPtr> *points);
+  bool insertGraph(const std::vector<descartes_core::TrajectoryPtPtr>& points);
 
   /** @brief adds a single trajectory point to the graph
    * @param point The new point to add to the graph
@@ -75,24 +72,19 @@ public:
    */
   bool getShortestPath(double &cost, std::list<descartes_trajectory::JointTrajectoryPt> &path);
 
-  descartes_core::RobotModelConstPtr getRobotModel();
+  descartes_core::RobotModelConstPtr getRobotModel() const { return robot_model_; }
 
 protected:
   descartes_planner::LadderGraph graph_;
   descartes_core::RobotModelConstPtr robot_model_;
   CostFunction custom_cost_function_;
+
   /**
    * @brief A pair indicating the validity of the edge, and if valid, the cost associated
    *        with that edge
    */
-  typedef std::pair<bool, double> EdgeWeightResult;
-
-  /** @brief function for computing edge weight based on specified cost function */
-  EdgeWeightResult edgeWeight(const descartes_trajectory::JointTrajectoryPt &start,
-                              const descartes_trajectory::JointTrajectoryPt &end) const;
-
   bool calculateJointSolutions(const descartes_core::TrajectoryPtPtr* points, const std::size_t count,
-                               std::vector<std::vector<std::vector<double>>>& poses);
+                               std::vector<std::vector<std::vector<double>>>& poses) const;
 
   /** @brief (Re)create the actual graph nodes(vertices) from the list of joint solutions (vertices) */
   bool populateGraphVertices(const std::vector<descartes_core::TrajectoryPtPtr> &points,
@@ -102,7 +94,7 @@ protected:
   std::vector<LadderGraph::EdgeList> calculateEdgeWeights(const std::vector<double> &start_joints,
                                                           const std::vector<double> &end_joints,
                                                           size_t dof,
-                                                          const descartes_core::TimingConstraint& tm);
+                                                          const descartes_core::TimingConstraint& tm) const;
 };
 
 } /* namespace descartes_planner */

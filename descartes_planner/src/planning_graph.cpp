@@ -20,50 +20,28 @@
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
+ *      Author: Jonathan Meyer
  */
 
 #include "descartes_planner/planning_graph.h"
+#include "descartes_planner/ladder_graph_dijkstras.h"
 
 #include <ros/console.h>
-#include <omp.h>
-
-#include "descartes_planner/ladder_graph_dijkstras.h"
 
 using namespace descartes_core;
 using namespace descartes_trajectory;
+
 namespace descartes_planner
 {
-PlanningGraph::PlanningGraph(RobotModelConstPtr model)
-  : robot_model_(std::move(model)), custom_cost_function_(NULL), graph_(model->getDOF())
-{
-}
 
 PlanningGraph::PlanningGraph(RobotModelConstPtr model, CostFunction cost_function_callback)
-  : robot_model_(std::move(model)), custom_cost_function_(cost_function_callback), graph_(model->getDOF())
+  : graph_(model->getDOF()), robot_model_(std::move(model)), custom_cost_function_(cost_function_callback)
 {
 }
 
-PlanningGraph::~PlanningGraph()
+bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
 {
-}
-
-
-descartes_core::RobotModelConstPtr PlanningGraph::getRobotModel()
-{
-  return robot_model_;
-}
-
-bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>* points)
-{
-  ROS_WARN("1");
-  auto start = ros::Time::now();
-  // validate input
-  if (!points)
-  {
-    ROS_ERROR_STREAM("points == null. Cannot initialize graph with null list.");
-    return false;
-  }
-  if (points->size() < 2)
+  if (points.size() < 2)
   {
     ROS_ERROR_STREAM(__FUNCTION__ << ": must provide at least 2 input trajectory points.");
     return false;
@@ -71,20 +49,19 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>* points)
 
   // generate solutions for this point
   std::vector<std::vector<std::vector<double>>> all_joint_sols;
-  if (!calculateJointSolutions(points->data(), points->size(), all_joint_sols))
+  if (!calculateJointSolutions(points.data(), points.size(), all_joint_sols))
   {
     return false;
   }
 
   // insert into graph as vertices
-  graph_.allocate(points->size());
-  for (std::size_t i = 0; i < points->size(); ++i)
+  graph_.allocate(points.size());
+  for (std::size_t i = 0; i < points.size(); ++i)
   {
-    graph_.assignRung(i, (*points)[i]->getID(), (*points)[i]->getTiming(), all_joint_sols[i]);
+    graph_.assignRung(i, points[i].getID(), points[i].getTiming(), all_joint_sols[i]);
   }
 
   // now we have a graph with data in the 'rungs' and we need to compute the edges
-//  #pragma omp parallel for
   for (std::size_t i = 0; i < graph_.size() - 1; ++i)
   {
     // compute edges for pair 'i' and 'i+1'
@@ -97,23 +74,31 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>* points)
     graph_.assignEdges(i, std::move(edges));
   }
 
-  auto stop = ros::Time::now();
-  ROS_WARN("T: %f", (stop - start).toSec());
   return true;
 }
 
 bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previous_id, TrajectoryPt::ID next_id)
 {
-  return false;
+  return false; // TODO
 }
 
 bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 {
-  return false;
+  return false; // TODO
 }
 
 bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
 {
+  // Remove a point from the graph
+  auto s = graph_.indexOf(point->getID());
+  if (!s.second) return false;
+
+  // remove the vertices associated with this point
+
+  // remove all out edges from previous rung, if applicable
+  // recompute edges from previous rung to new rung, if applicable
+
+  // TODO
   return false;
 }
 
@@ -141,11 +126,10 @@ bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& 
 }
 
 bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const std::size_t count,
-                                            std::vector<std::vector<std::vector<double>>>& poses)
+                                            std::vector<std::vector<std::vector<double>>>& poses) const
 {
   poses.resize(count);
 
-//  #pragma omp parallel for
   for (std::size_t i = 0; i < count; ++i)
   {
     std::vector<std::vector<double>> joint_poses;
@@ -154,7 +138,7 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
     if (joint_poses.empty())
     {
       ROS_ERROR_STREAM(__FUNCTION__ << ": IK failed for input trajectory point with ID = " << points[i]->getID());
-//      return false;
+     return false;
     }
 
     poses[i] = std::move(joint_poses);
@@ -164,7 +148,7 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
 }
 
 std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std::vector<double>& start_joints,
-                                         const std::vector<double>& end_joints, size_t dof, const TimingConstraint& tm)
+                                         const std::vector<double>& end_joints, size_t dof, const TimingConstraint& tm) const
 {
   const auto from_size = start_joints.size();
   const auto to_size = end_joints.size();
@@ -201,49 +185,6 @@ std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std
   }
 
   return edges;
-}
-
-PlanningGraph::EdgeWeightResult PlanningGraph::edgeWeight(const JointTrajectoryPt& start,
-                                                          const JointTrajectoryPt& end) const
-{
-  EdgeWeightResult result;
-  result.first = false;
-
-  const std::vector<double>& start_vector = start.nominal();
-  const std::vector<double>& end_vector = end.nominal();
-  if (start_vector.size() == end_vector.size())
-  {
-    // Check to see if time is specified and if so, check to see if the
-    // joint motion is possible in the window provided
-    if (end.getTiming().isSpecified() && !robot_model_->isValidMove(start_vector, end_vector, end.getTiming().upper))
-    {
-      return result;
-    }
-
-    if (custom_cost_function_)
-    {
-      result.second = custom_cost_function_(start_vector, end_vector);
-    }
-    else
-    {
-      double vector_diff = 0;
-      for (unsigned i = 0; i < start_vector.size(); i++)
-      {
-        double joint_diff = std::abs(end_vector[i] - start_vector[i]);
-        vector_diff += joint_diff;
-      }
-      result.second = vector_diff;
-    }
-
-    result.first = true;
-    return result;
-  }
-  else
-  {
-    ROS_WARN_STREAM("unequal joint pose vector lengths: " << start_vector.size() << " != " << end_vector.size());
-  }
-
-  return result;
 }
 
 } /* namespace descartes_planner */

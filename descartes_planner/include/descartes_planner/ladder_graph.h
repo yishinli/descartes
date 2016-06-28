@@ -76,6 +76,21 @@ public:
     return count;
   }
 
+  std::pair<size_type, bool> indexOf(descartes_core::TrajectoryID id) const noexcept
+  {
+    auto it = std::find_if(rungs_.cbegin(), rungs_.cend(), [id] (const Rung& r) {
+      return id == r.id;
+    });
+    if (it == rungs_.cend())
+    {
+      return {0u, false};
+    }
+    else
+    {
+      return {std::distance(it, rungs_.cbegin()), true};
+    }
+  }
+
   const double* dataAt(size_type rung, size_type index) const
   {
     return getRung(rung).data.data() + (dof_ * index);

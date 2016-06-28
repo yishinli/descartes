@@ -6,6 +6,7 @@
  */
 
 #include <descartes_planner/dense_planner.h>
+#include <boost/make_shared.hpp>
 
 namespace descartes_planner
 {
@@ -79,7 +80,20 @@ bool DensePlanner::updatePath()
 {
   double c;
   std::list<descartes_trajectory::JointTrajectoryPt> list;
-  return planning_graph_->getShortestPath(c, list);
+  if (planning_graph_->getShortestPath(c, list))
+  {
+    error_code_ = descartes_core::PlannerErrors::OK;
+    for (auto&& p : list)
+    {
+      path_.push_back(boost::make_shared<descartes_trajectory::JointTrajectoryPt>(std::move(p)));
+    }
+    return true;
+  }
+  else
+  {
+    error_code_ = descartes_core::PlannerErrors::UKNOWN;
+    return false;
+  }
 }
 
 descartes_core::TrajectoryPt::ID DensePlanner::getNext(const descartes_core::TrajectoryPt::ID& ref_id)
@@ -131,11 +145,10 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
     return false;
   }
 
-  double cost;
   path_.clear();
   error_code_ = descartes_core::PlannerError::EMPTY_PATH;
 
-  if (planning_graph_->insertGraph(&traj))
+  if (planning_graph_->insertGraph(traj))
   {
     updatePath();
   }
@@ -144,17 +157,17 @@ bool DensePlanner::planPath(const std::vector<descartes_core::TrajectoryPtPtr>& 
     error_code_ = descartes_core::PlannerError::IK_NOT_AVAILABLE;
   }
 
-  return true; //descartes_core::PlannerError::OK == error_code_;
+  return descartes_core::PlannerError::OK == error_code_;
 }
 
 bool DensePlanner::getPath(std::vector<descartes_core::TrajectoryPtPtr>& path) const
 {
   return true;
-//  if (path_.empty())
-//    return false;
+  if (path_.empty())
+    return false;
 
-//  path.assign(path_.begin(), path_.end());
-//  return error_code_ == descartes_core::PlannerError::OK;
+  path.assign(path_.begin(), path_.end());
+  return error_code_ == descartes_core::PlannerError::OK;
 }
 
 bool DensePlanner::addAfter(const descartes_core::TrajectoryPt::ID& ref_id, descartes_core::TrajectoryPtPtr tp)

@@ -11,7 +11,7 @@
 #include "descartes_trajectory/axial_symmetric_pt.h"
 
 
-#define DESCARTES_EXPECTS(v) do { if (!(v)) abort(); } while (false);
+#define DESCARTES_EXPECTS(v) do { if (!(v)) throw std::runtime_error( (#v) ); } while (false);
 
 void escape(void* p)
 {
