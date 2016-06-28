@@ -91,6 +91,16 @@ public:
     }
   }
 
+  bool isLast(size_type index) const noexcept
+  {
+    return index + 1 == size();
+  }
+
+  bool isFirst(size_type index) const noexcept
+  {
+    return index == 0;
+  }
+
   const double* dataAt(size_type rung, size_type index) const
   {
     return getRung(rung).data.data() + (dof_ * index);
@@ -131,6 +141,22 @@ public:
     }
     // Given this new vertex set, build an edge list for each
     getEdges(index).resize(r.data.size());
+  }
+
+  void clearVertices(size_type index)
+  {
+    rungs_.erase(std::next(rungs_.begin(), index));
+  }
+
+  void clearEdges(size_type index)
+  {
+    edges_.erase(std::next(edges_.begin(), index));
+  }
+
+  void clearRung(size_type index)
+  {
+    clearVertices(index);
+    clearEdges(index);
   }
 
   // TODO: Implement clear rung / remove rung

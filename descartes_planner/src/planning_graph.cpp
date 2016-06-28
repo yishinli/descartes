@@ -69,8 +69,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
     const auto& joints2 = graph_.getRung(i+1).data;
     const auto& tm = graph_.getRung(i + 1).timing;
 
-    std::vector<LadderGraph::EdgeList> edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
-
+    auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
     graph_.assignEdges(i, std::move(edges));
   }
 
@@ -93,13 +92,26 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
   auto s = graph_.indexOf(point->getID());
   if (!s.second) return false;
 
-  // remove the vertices associated with this point
+  auto in_middle = !graph_.isFirst(s.second) && !graph_.isLast(s.second);
 
-  // remove all out edges from previous rung, if applicable
-  // recompute edges from previous rung to new rung, if applicable
+  // remove the vertices & edges associated with this point
+  graph_.clearRung(s.first);
 
-  // TODO
-  return false;
+  // recompute edges from previous rung to next rung, if applicable
+  if (in_middle)
+  {
+    auto prev_idx = s.second - 1;
+    auto next_idx = s.second; // We erased a point, so the indexes have collapsed by one
+
+    const auto& joints1 = graph_.getRung(prev_idx).data;
+    const auto& joints2 = graph_.getRung(next_idx).data;
+    const auto& tm = graph_.getRung(next_idx).timing;
+
+    auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
+    graph_.assignEdges(prev_idx, std::move(edges));
+  }
+
+  return true;
 }
 
 bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& path)
