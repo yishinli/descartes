@@ -69,14 +69,7 @@ bool UR5RobotModel::getAllIK(const Eigen::Affine3d &pose, std::vector<std::vecto
    for(int i=0; i<dimension_; i++)
      jnt_seed_state(i) = 0.0f;
 
-
-   KDL::ChainFkSolverPos_recursive fk_solver_base(kdl_base_chain_);
-   KDL::ChainFkSolverPos_recursive fk_solver_tip(kdl_tip_chain_);
-
-   KDL::JntArray jnt_pos_test(jnt_seed_state);
-   KDL::JntArray jnt_pos_base(ur_joint_inds_start_);
-   KDL::JntArray jnt_pos_tip(dimension_ - 6 - ur_joint_inds_start_);
-   KDL::Frame pose_base, pose_tip;
+ KDL::JntArray jnt_pos_test(jnt_seed_state);
 
   double ik_pose[4][4];
   double q_ik_sols[8][6]; // maximum of 8 IK solutions
@@ -86,7 +79,6 @@ bool UR5RobotModel::getAllIK(const Eigen::Affine3d &pose, std::vector<std::vecto
   num_sols = inverse((double*) ik_pose, (double*) q_ik_sols,jnt_pos_test(ur_joint_inds_start_+5));
 
   ROS_DEBUG_STREAM("ur5 custom ikfast found "<<num_sols<<" solutions");
-  uint16_t num_valid_sols;
   for(uint16_t i=0; i<num_sols; i++)
   {
    bool valid = true;
