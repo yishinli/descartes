@@ -47,6 +47,8 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
     return false;
   }
 
+  if (graph_.size() > 0) graph_.clear();
+
   // generate solutions for this point
   std::vector<std::vector<std::vector<double>>> all_joint_sols;
   if (!calculateJointSolutions(points.data(), points.size(), all_joint_sols))
@@ -83,6 +85,7 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
   graph_.insertRung(insert_idx);
   graph_.assignRung(insert_idx, point->getID(), point->getTiming(), poses[0]);
 
+
   // Build edges from prev point, if applicable
   if (!previous_id.is_nil())
   {
@@ -112,7 +115,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 
   // clear vertices & edges of 'point'
   graph_.clearVertices(idx);
-  graph_.getEdges(idx).clear(); // TODO: Combine with above?
+//  graph_.clearEdges( // TODO: Combine with above?
   graph_.assignRung(idx, point->getID(), point->getTiming(), poses[0]);
 
   // If there is a previous point, compute new edges
@@ -218,7 +221,7 @@ std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std
 
     for (size_t j = 0; j < to_size; j += dof) // to rung
     {
-      if (!robot_model_->isValidMove(start_joints.data() + i, end_joints.data() + j, tm.upper))
+      if (tm.isSpecified() && !robot_model_->isValidMove(start_joints.data() + i, end_joints.data() + j, tm.upper))
       {
         idx++;
         continue;

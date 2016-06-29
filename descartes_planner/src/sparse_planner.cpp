@@ -164,7 +164,7 @@ bool SparsePlanner::planPath(const std::vector<TrajectoryPtPtr>& traj)
   ROS_INFO_STREAM("Sampled trajectory contains " << sparse_trajectory_array.size() << " points from "
                                                  << cart_points_.size() << " points in the dense trajectory");
 
-  if (planning_graph_->insertGraph(&sparse_trajectory_array) && plan())
+  if (planning_graph_->insertGraph(sparse_trajectory_array) && plan())
   {
     int planned_count = sparse_solution_array_.size();
     int interp_count = cart_points_.size() - sparse_solution_array_.size();
@@ -486,45 +486,15 @@ bool SparsePlanner::getSparseSolutionArray(SolutionArray& sparse_solution_array)
 
 bool SparsePlanner::getOrderedSparseArray(std::vector<TrajectoryPtPtr>& sparse_array)
 {
-  const CartesianMap& cart_map = planning_graph_->getCartesianMap();
-  TrajectoryPt::ID first_id = descartes_core::TrajectoryID::make_nil();
-  auto predicate = [&first_id](const std::pair<TrajectoryPt::ID, CartesianPointInformation>& p)
+  // 1. Find the first point in the original trajectory
+  // 2. Copy point pointers from this to into 'sparse_array' in sequence
+  const auto& graph = planning_graph_->graph();
+  sparse_array.resize(graph.size());
+  for (std::size_t i = 0; i < graph.size(); ++i)
   {
-    const auto& info = p.second;
-    if (info.links_.id_previous == descartes_core::TrajectoryID::make_nil())
-    {
-      first_id = p.first;
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  };
-
-  // finding first point
-  if (cart_map.empty() || (std::find_if(cart_map.begin(), cart_map.end(), predicate) == cart_map.end()) ||
-      first_id == descartes_core::TrajectoryID::make_nil())
-  {
-    return false;
+    auto idx = getDensePointIndex(graph.getRung(i).id);
+    sparse_array[i] = cart_points_[idx];
   }
-
-  // copying point pointers in order
-  sparse_array.resize(cart_map.size());
-  TrajectoryPt::ID current_id = first_id;
-  for (int i = 0; i < sparse_array.size(); i++)
-  {
-    if (cart_map.count(current_id) == 0)
-    {
-      ROS_ERROR_STREAM("Trajectory point " << current_id << " was not found in sparse trajectory.");
-      return false;
-    }
-
-    const CartesianPointInformation& info = cart_map.at(current_id);
-    sparse_array[i] = info.source_trajectory_;
-    current_id = info.links_.id_next;
-  }
-
   return true;
 }
 

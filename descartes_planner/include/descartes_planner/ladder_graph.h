@@ -56,7 +56,7 @@ public:
     return edges_[index];
   }
 
-  const std::vector<EdgeList>& getEdges(size_type index) const noexcept
+  const std::vector<EdgeList>& getEdges(size_type index) const
   {
     return edges_[index];
   }
@@ -87,7 +87,7 @@ public:
     }
     else
     {
-      return {std::distance(it, rungs_.cbegin()), true};
+      return {std::distance(rungs_.cbegin(), it), true};
     }
   }
 
@@ -164,10 +164,21 @@ public:
     rungs_[index].data.clear();
   }
 
+  void clearEdges(size_type index)
+  {
+    edges_[index].clear();
+  }
+
   void insertRung(size_type index)
   {
-    rungs_.insert(std::next(rungs_.begin(), index), {});
-    edges_.insert(std::next(edges_.begin(), index), {});
+    rungs_.insert(std::next(rungs_.begin(), index), Rung{} );
+    edges_.insert(std::next(edges_.begin(), index), std::vector<EdgeList> {} );
+  }
+
+  void clear()
+  {
+    rungs_.clear();
+    edges_.clear();
   }
 
   // TODO: Implement clear rung / remove rung

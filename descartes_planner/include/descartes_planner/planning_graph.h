@@ -63,14 +63,9 @@ public:
 
   bool removeTrajectory(descartes_core::TrajectoryPtPtr point);
 
-  /** @brief Calculate and return the shortest path from the given joint solution indices
-   * @param startIndex The index of the joint solution at which to start
-   * @param endIndex The index of the joint solution at which to end
-   * @param cost The cost of the returned path
-   * @param path The sequence of points (joint solutions) for the path (TODO: change to JointTrajectoryPt?)
-   * @return True if a valid path is found
-   */
   bool getShortestPath(double &cost, std::list<descartes_trajectory::JointTrajectoryPt> &path);
+
+  const descartes_planner::LadderGraph& graph() const noexcept { return graph_; }
 
   descartes_core::RobotModelConstPtr getRobotModel() const { return robot_model_; }
 
