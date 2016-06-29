@@ -64,13 +64,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
   // now we have a graph with data in the 'rungs' and we need to compute the edges
   for (std::size_t i = 0; i < graph_.size() - 1; ++i)
   {
-    // compute edges for pair 'i' and 'i+1'
-    const auto& joints1 = graph_.getRung(i).data;
-    const auto& joints2 = graph_.getRung(i+1).data;
-    const auto& tm = graph_.getRung(i + 1).timing;
-
-    auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
-    graph_.assignEdges(i, std::move(edges));
+    computeAndAssignEdges(i, i + 1);
   }
 
   return true;
@@ -78,10 +72,32 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
 
 bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previous_id, TrajectoryPt::ID next_id)
 {
-  auto ps = graph_.indexOf(previous_id);
   auto ns = graph_.indexOf(next_id);
 
-  return false; // TODO
+  // Next & prev can be 'null' indicating end & start of trajectory
+  std::vector<std::vector<std::vector<double>>> poses;
+  calculateJointSolutions(&point, 1, poses); // TODO: If there are no points, return false?
+
+  // Insert new point into graph
+  auto insert_idx = ns.second ? ns.first : graph_.size() - 1;
+  graph_.insertRung(insert_idx);
+  graph_.assignRung(insert_idx, point->getID(), point->getTiming(), poses[0]);
+
+  // Build edges from prev point, if applicable
+  if (!previous_id.is_nil())
+  {
+    auto prev_idx = insert_idx - 1;
+    computeAndAssignEdges(prev_idx, insert_idx);
+  }
+
+  // Build edges to next point, if applicable
+  if (!next_id.is_nil())
+  {
+    auto next_idx = insert_idx + 1;
+    computeAndAssignEdges(insert_idx, next_idx);
+  }
+
+  return true;
 }
 
 bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
@@ -103,24 +119,14 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
   if (!graph_.isFirst(idx))
   {
     auto prev_idx = idx - 1;
-    const auto& joints1 = graph_.getRung(prev_idx).data;
-    const auto& joints2 = graph_.getRung(idx).data;
-    const auto& tm = graph_.getRung(idx).timing;
-
-    auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
-    graph_.assignEdges(prev_idx, std::move(edges));
+    computeAndAssignEdges(prev_idx, idx);
   }
 
   // If there is a next point, compute new edges
   if (!graph_.isLast(idx))
   {
     auto next_idx = idx + 1;
-    const auto& joints1 = graph_.getRung(idx).data;
-    const auto& joints2 = graph_.getRung(next_idx).data;
-    const auto& tm = graph_.getRung(next_idx).timing;
-
-    auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
-    graph_.assignEdges(idx, std::move(edges));
+    computeAndAssignEdges(idx, next_idx);
   }
 
   return true;
@@ -142,13 +148,7 @@ bool PlanningGraph::removeTrajectory(TrajectoryPtPtr point)
   {
     auto prev_idx = s.first - 1;
     auto next_idx = s.first; // We erased a point, so the indexes have collapsed by one
-
-    const auto& joints1 = graph_.getRung(prev_idx).data;
-    const auto& joints2 = graph_.getRung(next_idx).data;
-    const auto& tm = graph_.getRung(next_idx).timing;
-
-    auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
-    graph_.assignEdges(prev_idx, std::move(edges));
+    computeAndAssignEdges(prev_idx, next_idx);
   }
 
   return true;
@@ -237,6 +237,16 @@ std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std
   }
 
   return edges;
+}
+
+inline void PlanningGraph::computeAndAssignEdges(std::size_t start_idx, std::size_t end_idx)
+{
+  const auto& joints1 = graph_.getRung(start_idx).data;
+  const auto& joints2 = graph_.getRung(end_idx).data;
+  const auto& tm = graph_.getRung(end_idx).timing;
+
+  auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
+  graph_.assignEdges(start_idx, std::move(edges));
 }
 
 } /* namespace descartes_planner */

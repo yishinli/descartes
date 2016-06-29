@@ -95,6 +95,9 @@ protected:
                                                           const std::vector<double> &end_joints,
                                                           size_t dof,
                                                           const descartes_core::TimingConstraint& tm) const;
+
+  void computeAndAssignEdges(std::size_t start_idx, std::size_t end_idx);
+
 };
 
 } /* namespace descartes_planner */
