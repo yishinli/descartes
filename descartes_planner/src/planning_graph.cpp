@@ -36,8 +36,7 @@ namespace descartes_planner
 
 PlanningGraph::PlanningGraph(RobotModelConstPtr model, CostFunction cost_function_callback)
   : graph_(model->getDOF()), robot_model_(std::move(model)), custom_cost_function_(cost_function_callback)
-{
-}
+{}
 
 bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
 {
@@ -47,7 +46,7 @@ bool PlanningGraph::insertGraph(const std::vector<TrajectoryPtPtr>& points)
     return false;
   }
 
-  if (graph_.size() > 0) graph_.clear();
+  if (graph_.size() > 0) clear();
 
   // generate solutions for this point
   std::vector<std::vector<std::vector<double>>> all_joint_sols;
@@ -115,7 +114,7 @@ bool PlanningGraph::modifyTrajectory(TrajectoryPtPtr point)
 
   // clear vertices & edges of 'point'
   graph_.clearVertices(idx);
-//  graph_.clearEdges( // TODO: Combine with above?
+  graph_.clearEdges(idx);
   graph_.assignRung(idx, point->getID(), point->getTiming(), poses[0]);
 
   // If there is a previous point, compute new edges
@@ -168,7 +167,7 @@ bool PlanningGraph::getShortestPath(double& cost, std::list<JointTrajectoryPt>& 
   for (size_t i = 0; i < path_idxs.size(); ++i)
   {
     const auto idx = path_idxs[i];
-    const auto* data = graph_.dataAt(i, idx);
+    const auto* data = graph_.vertex(i, idx);
     const auto& tm = graph_.getRung(i).timing;
 
     auto pt = JointTrajectoryPt(std::vector<double>(data, data + dof), tm);
@@ -227,13 +226,20 @@ std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std
         continue;
       }
 
-      double cost = 0.0;
-      for (size_t k = 0; k < dof; ++k)
+      double cost;
+      if (custom_cost_function_)
       {
-        cost += std::abs(start_joints[i + k] - end_joints[j + k]);
+        cost = custom_cost_function_(&start_joints[i], &end_joints[j]);
       }
-      edge_scratch[count++] = {cost, idx};
-      idx++;
+      else
+      {
+        cost = 0.0;
+        for (size_t k = 0; k < dof; ++k)
+        {
+          cost += std::abs(start_joints[i + k] - end_joints[j + k]);
+        }
+      }
+      edge_scratch[count++] = {cost, idx++};
     }
 
     edges[i/dof] = LadderGraph::EdgeList(edge_scratch.begin(), edge_scratch.begin() + count);

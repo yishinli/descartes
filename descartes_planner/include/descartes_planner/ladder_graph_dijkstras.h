@@ -15,7 +15,7 @@ struct VD // Vertex Descriptor
 class DijkstrasSearch
 {
 public:
-  DijkstrasSearch(LadderGraph& graph);
+  explicit DijkstrasSearch(LadderGraph& graph);
 
   double run();
 
@@ -26,27 +26,27 @@ private:
 
   enum Color {WHITE, BLACK, GRAY};
 
-  size_t index(VD a) const
+  inline size_t index(VD a) const noexcept
   {
     return solution_[a.rung].n_start + a.index;
   }
 
-  double& distance(VD v)
+  inline double& distance(VD v) noexcept
   {
     return solution_[v.rung].distance[v.index];
   }
 
-  VD& predecessor(VD v)
+  inline VD& predecessor(VD v) noexcept
   {
     return solution_[v.rung].predecessor[v.index];
   }
 
-  const VD& predecessor(VD v) const
+  inline const VD& predecessor(VD v) const noexcept
   {
     return solution_[v.rung].predecessor[v.index];
   }
 
-  Color& color(VD v)
+  inline Color& color(VD v) noexcept
   {
     return solution_[v.rung].colors[v.index];
   }
@@ -62,7 +62,5 @@ private:
   std::vector<SolutionRung> solution_;
   std::size_t N;
 };
-
-
 } // descartes_planner
 #endif

@@ -20,6 +20,7 @@
  *
  *  Created on: Jun 5, 2014
  *      Author: Dan Solomon
+ *      Author: Jonathan Meyer
  */
 
 #ifndef PLANNING_GRAPH_H_
@@ -35,7 +36,7 @@
 namespace descartes_planner
 {
 
-typedef boost::function<double(const std::vector<double> &, const std::vector<double> &)> CostFunction;
+typedef boost::function<double(const double*, const double*)> CostFunction;
 
 
 class PlanningGraph
@@ -44,7 +45,7 @@ public:
   PlanningGraph(descartes_core::RobotModelConstPtr model, CostFunction cost_function_callback = CostFunction{});
 
   /** \brief Clear all previous graph data */
-  void clear();
+  void clear() { graph_.clear(); }
 
   /** @brief initial population of graph trajectory elements
    * @param points list of trajectory points to be used to construct the graph
