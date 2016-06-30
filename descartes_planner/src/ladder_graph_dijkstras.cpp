@@ -21,7 +21,7 @@ struct ValueKey
 
 using BinaryHeap = boost::heap::d_ary_heap<ValueKey, boost::heap::arity<2>, boost::heap::mutable_<true> >;
 
-DijkstrasSearch::DijkstrasSearch(LadderGraph& graph)
+DijkstrasSearch::DijkstrasSearch(const LadderGraph &graph)
   : graph_(graph)
 {
   // On creating an object, let's allocate everything we need

@@ -15,7 +15,7 @@ struct VD // Vertex Descriptor
 class DijkstrasSearch
 {
 public:
-  explicit DijkstrasSearch(LadderGraph& graph);
+  explicit DijkstrasSearch(const LadderGraph& graph);
 
   double run();
 

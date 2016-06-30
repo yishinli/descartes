@@ -25,7 +25,6 @@
 
 #include "descartes_planner/planning_graph.h"
 #include "descartes_planner/ladder_graph_dijkstras.h"
-
 #include <ros/console.h>
 
 using namespace descartes_core;
@@ -83,7 +82,6 @@ bool PlanningGraph::addTrajectory(TrajectoryPtPtr point, TrajectoryPt::ID previo
   auto insert_idx = ns.second ? ns.first : graph_.size() - 1;
   graph_.insertRung(insert_idx);
   graph_.assignRung(insert_idx, point->getID(), point->getTiming(), poses[0]);
-
 
   // Build edges from prev point, if applicable
   if (!previous_id.is_nil())
