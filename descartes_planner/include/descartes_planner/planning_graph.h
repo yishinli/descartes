@@ -90,7 +90,8 @@ protected:
   std::vector<LadderGraph::EdgeList> calculateEdgeWeights(const std::vector<double> &start_joints,
                                                           const std::vector<double> &end_joints,
                                                           size_t dof,
-                                                          const descartes_core::TimingConstraint& tm) const;
+                                                          const descartes_core::TimingConstraint& tm,
+                                                          bool& found_edges) const;
 
   void computeAndAssignEdges(std::size_t start_idx, std::size_t end_idx);
 

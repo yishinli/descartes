@@ -202,48 +202,52 @@ bool PlanningGraph::calculateJointSolutions(const TrajectoryPtPtr* points, const
 }
 
 std::vector<LadderGraph::EdgeList> PlanningGraph::calculateEdgeWeights(const std::vector<double>& start_joints,
-                                         const std::vector<double>& end_joints, size_t dof, const TimingConstraint& tm) const
+                                         const std::vector<double>& end_joints, size_t dof, const TimingConstraint& tm, bool &found_edges) const
 {
   const auto from_size = start_joints.size();
   const auto to_size = end_joints.size();
   const auto n_start_points = from_size / dof;
   const auto n_end_points = to_size / dof;
+  auto total_edges = 0u;
 
-  std::vector<LadderGraph::EdgeList> edges (n_start_points);
+  std::vector<LadderGraph::EdgeList> edges (n_start_points); // ret value
+  LadderGraph::EdgeList edge_scratch (n_end_points); // pre-allocated space to work in
 
-  LadderGraph::EdgeList edge_scratch (n_end_points);
-
-  for (size_t i = 0; i < from_size; i += dof) // from rung
+  for (size_t i = 0; i < n_start_points; i++) // from rung
   {
-    size_t count = 0;
-    unsigned idx = 0;
+    auto start_index = i * dof;
+    auto count = 0u;
 
-    for (size_t j = 0; j < to_size; j += dof) // to rung
+    for (size_t j = 0; j < n_end_points; j++) // to rung
     {
-      if (tm.isSpecified() && !robot_model_->isValidMove(start_joints.data() + i, end_joints.data() + j, tm.upper))
+      auto end_index = j * dof;
+      if (tm.isSpecified() && !robot_model_->isValidMove(start_joints.data() + start_index,
+                                                         end_joints.data() + end_index, tm.upper))
       {
-        idx++;
         continue;
       }
 
       double cost;
       if (custom_cost_function_)
       {
-        cost = custom_cost_function_(&start_joints[i], &end_joints[j]);
+        cost = custom_cost_function_(&start_joints[start_index], &end_joints[end_index]);
       }
       else
       {
         cost = 0.0;
         for (size_t k = 0; k < dof; ++k)
         {
-          cost += std::abs(start_joints[i + k] - end_joints[j + k]);
+          cost += std::abs(start_joints[start_index + k] - end_joints[end_index + k]);
         }
       }
-      edge_scratch[count++] = {cost, idx++};
+      edge_scratch[count++] = {cost, static_cast<unsigned>(j)};
     }
 
-    edges[i/dof] = LadderGraph::EdgeList(edge_scratch.begin(), edge_scratch.begin() + count);
+    edges[i] = LadderGraph::EdgeList(edge_scratch.begin(), edge_scratch.begin() + count);
+    total_edges += count;
   }
+
+  found_edges = (total_edges != 0u);
 
   return edges;
 }
@@ -254,8 +258,12 @@ inline void PlanningGraph::computeAndAssignEdges(std::size_t start_idx, std::siz
   const auto& joints2 = graph_.getRung(end_idx).data;
   const auto& tm = graph_.getRung(end_idx).timing;
 
-  auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm);
+  bool b;
+  auto edges = calculateEdgeWeights(joints1, joints2, robot_model_->getDOF(), tm, b);
   graph_.assignEdges(start_idx, std::move(edges));
+
+  if (!b) ROS_WARN("Unable to find any edges between graph indices %lu and %lu.",
+                   start_idx, end_idx);
 }
 
 } /* namespace descartes_planner */
