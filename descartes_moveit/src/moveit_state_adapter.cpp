@@ -285,10 +285,17 @@ bool MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const
   // Satisfies joint positional bounds?
   if (!joint_group_->satisfiesPositionBounds(joint_pose.data()))
   {
-    return false;
+      logError("satisfiesPositionBounds() ... FAIL");
+      return false;
   }
   // Is in collision (if collision is active)
-  return !isInCollision(joint_pose);
+  if (isInCollision(joint_pose))
+  {
+      logError("isInCollision() ... FAIL");
+      return false;
+  }
+  else
+      return true;
 }
 
 bool MoveitStateAdapter::isValid(const Eigen::Affine3d& pose) const
