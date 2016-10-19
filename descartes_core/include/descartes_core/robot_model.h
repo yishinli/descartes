@@ -62,7 +62,10 @@ public:
    * @return True if successful
    */
   virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const = 0;
-
+  virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<std::pair<int,std::vector<double>>> &joint_poses) const = 0;
+                                                                        /* ^^^這個 int 的值是 ik-hint */
+  /* search the ikHint of Cartesian pose for joint_pose, return True if found */
+  virtual bool getIkHint(const Eigen::Affine3d& pose, const std::vector<double>& joint_pose, int& ikHint) const = 0;
   /**
    * @brief Returns the affine pose
    * @param joint_pose Solution (if function successful).

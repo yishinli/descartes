@@ -64,6 +64,33 @@ bool descartes_moveit::IkFastMoveitStateAdapter::initialize(const std::string& r
   return computeIKFastTransforms();
 }
 
+bool descartes_moveit::IkFastMoveitStateAdapter::getIkHint(const Eigen::Affine3d& pose,
+                                                           const std::vector<double>& joint_pose,
+                                                           int& ikHint) const
+{
+  const double EPSILON = 0.00001;
+  bool bFound;
+  std::vector<std::pair<int,std::vector<double>>> joint_poses;
+
+  getAllIK(pose, joint_poses);
+  ROS_DEBUG_STREAM("Get all IK returned " << joint_poses.size() << " solutions");
+
+  ikHint = -1;
+  bFound = false;
+  for (auto it = joint_poses.begin(); it != joint_poses.end(); ++it)
+  {
+    if (descartes_core::utils::equal(joint_pose, it->second, EPSILON))
+    {
+      bFound = true;
+      ikHint = it->first;
+      break;
+    }
+  }
+  ROS_DEBUG_STREAM("     fk_joint ikHint: " << ikHint);
+
+  return bFound;
+}
+
 bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose,
                                                           std::vector<std::vector<double>>& joint_poses) const
 {
@@ -96,6 +123,55 @@ bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Affine3d&
 
   return joint_poses.size() > 0;
 }
+
+/* getAllIK with ikHint */
+bool descartes_moveit::IkFastMoveitStateAdapter::getAllIK(const Eigen::Affine3d& pose,
+                                                          std::vector<std::pair<int,std::vector<double>>>& joint_poses) const
+{
+  joint_poses.clear();
+  const auto& solver = joint_group_->getSolverInstance();
+
+  // Transform input pose
+  Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool0_to_tip_.frame;
+
+  // convert to geometry_msgs ...
+  geometry_msgs::Pose geometry_pose;
+  tf::poseEigenToMsg(tool_pose, geometry_pose);
+  std::vector<geometry_msgs::Pose> poses = { geometry_pose };
+
+  std::vector<double> dummy_seed(getDOF(), 0.0);
+  std::vector<std::vector<double>> joint_results;
+  kinematics::KinematicsResult result;
+  kinematics::KinematicsQueryOptions options;  // defaults are reasonable as of Indigo
+
+
+  /* TODO: add ik-hint to joint_results */
+  if (!solver->getPositionIK(poses, dummy_seed, joint_results, result, options))
+  {
+    return false;
+  }
+
+  int ik_hint = result.kinematic_error;
+
+  // ROS_DEBUG("ik_hint result.kinematic_error(0x%08X)", ik_hint);
+
+  // ik-hint 的 bit-map，用來對應 joint_results[] 的解是第幾個 ik-solution
+  int i = 0;
+  for (auto& sol : joint_results)
+  {
+    while((ik_hint&(1<<i)) == 0) {
+    	i++;
+    }
+
+    if (isValid(sol))
+      joint_poses.push_back(std::make_pair(i, std::move(sol)));
+
+    i++;
+  }
+
+  return joint_poses.size() > 0;
+}
+
 
 bool descartes_moveit::IkFastMoveitStateAdapter::getIK(const Eigen::Affine3d& pose,
                                                        const std::vector<double>& seed_state,

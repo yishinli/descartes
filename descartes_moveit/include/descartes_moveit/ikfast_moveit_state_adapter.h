@@ -33,7 +33,12 @@ public:
   virtual bool initialize(const std::string& robot_description, const std::string& group_name,
                           const std::string& world_frame, const std::string& tcp_frame);
 
+
   virtual bool getAllIK(const Eigen::Affine3d& pose, std::vector<std::vector<double> >& joint_poses) const;
+  virtual bool getAllIK(const Eigen::Affine3d& pose, std::vector<std::pair<int,std::vector<double>>>& joint_poses) const;
+                                                                        /* ^^^ 這個 int 的值是 ik-hint */
+  /* search the ikHint of Cartesian pose for joint_pose, return True if found */
+  virtual bool getIkHint(const Eigen::Affine3d& pose, const std::vector<double>& joint_pose, int& ikHint) const;
 
   virtual bool getIK(const Eigen::Affine3d& pose, const std::vector<double>& seed_state,
                      std::vector<double>& joint_pose) const;

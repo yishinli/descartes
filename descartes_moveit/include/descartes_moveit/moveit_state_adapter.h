@@ -50,6 +50,9 @@ public:
                      std::vector<double> &joint_pose) const;
 
   virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const;
+  /* ikHint is for IkFastMoveitStateAdapter */
+  virtual bool getAllIK(const Eigen::Affine3d& pose, std::vector<std::pair<int,std::vector<double>>>& joint_poses) const {};
+  virtual bool getIkHint(const Eigen::Affine3d& pose, const std::vector<double>& joint_pose, int& ikHint) const {};
 
   virtual bool getFK(const std::vector<double> &joint_pose, Eigen::Affine3d &pose) const;
 
