@@ -285,13 +285,13 @@ bool MoveitStateAdapter::isValid(const std::vector<double>& joint_pose) const
   // Satisfies joint positional bounds?
   if (!joint_group_->satisfiesPositionBounds(joint_pose.data()))
   {
-      logError("satisfiesPositionBounds() ... FAIL");
+      logDebug("satisfiesPositionBounds() ... FAIL");
       return false;
   }
   // Is in collision (if collision is active)
   if (isInCollision(joint_pose))
   {
-      logError("isInCollision() ... FAIL");
+      logDebug("isInCollision() ... FAIL");
       return false;
   }
   else
